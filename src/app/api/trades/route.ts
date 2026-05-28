@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { type, asset, amount, price, total, currency, platform, counterparty, notes, date } = body
+    const { type, asset, amount, price, total, currency, platform, bank, counterparty, notes, date } = body
 
     if (!type || !asset || amount === undefined || price === undefined) {
       return NextResponse.json({ error: 'Faltan campos obligatorios' }, { status: 400 })
@@ -47,8 +47,9 @@ export async function POST(request: NextRequest) {
         amount: parseFloat(amount),
         price: parseFloat(price),
         total: total ? parseFloat(total) : parseFloat(amount) * parseFloat(price),
-        currency: currency || 'CUP',
+        currency: currency || 'VES',
         platform: platform || 'P2P',
+        bank: bank || null,
         counterparty: counterparty || null,
         notes: notes || null,
         date: date ? new Date(date) : new Date(),

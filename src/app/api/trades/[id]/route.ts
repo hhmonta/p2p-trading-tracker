@@ -8,7 +8,7 @@ export async function PUT(
   try {
     const { id } = await params
     const body = await request.json()
-    const { type, asset, amount, price, total, currency, platform, counterparty, notes, date } = body
+    const { type, asset, amount, price, total, currency, platform, bank, counterparty, notes, date } = body
 
     const existingTrade = await db.trade.findUnique({ where: { id } })
     if (!existingTrade) {
@@ -25,6 +25,7 @@ export async function PUT(
         ...(total !== undefined && { total: parseFloat(total) }),
         ...(currency !== undefined && { currency }),
         ...(platform !== undefined && { platform }),
+        ...(bank !== undefined && { bank: bank || null }),
         ...(counterparty !== undefined && { counterparty: counterparty || null }),
         ...(notes !== undefined && { notes: notes || null }),
         ...(date !== undefined && { date: new Date(date) }),

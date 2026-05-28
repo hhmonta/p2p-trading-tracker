@@ -16,6 +16,7 @@ model Trade {
   total        Float    // total in local currency (amount * price)
   currency     String   @default("VES") // local currency
   platform     String   @default("P2P") // platform name
+  bank         String?  // bank used for the trade
   counterparty String?  // who you traded with
   notes        String?  // additional notes
   date         DateTime @default(now())

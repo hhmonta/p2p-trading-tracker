@@ -77,6 +77,7 @@ interface Trade {
   total: number
   currency: string
   platform: string
+  bank: string | null
   counterparty: string | null
   notes: string | null
   date: string
@@ -352,6 +353,7 @@ function TradeFormDialog({
   const [price, setPrice] = useState(trade?.price?.toString() || '')
   const [currency, setCurrency] = useState(trade?.currency || 'VES')
   const [platform, setPlatform] = useState(trade?.platform || 'P2P')
+  const [bank, setBank] = useState(trade?.bank || '')
   const [counterparty, setCounterparty] = useState(trade?.counterparty || '')
   const [notes, setNotes] = useState(trade?.notes || '')
   const [date, setDate] = useState(trade ? formatDateForInput(trade.date) : format(new Date(), 'yyyy-MM-dd'))
@@ -370,6 +372,7 @@ function TradeFormDialog({
     setPrice('')
     setCurrency('VES')
     setPlatform('P2P')
+    setBank('')
     setCounterparty('')
     setNotes('')
     setDate(format(new Date(), 'yyyy-MM-dd'))
@@ -388,6 +391,7 @@ function TradeFormDialog({
       total,
       currency,
       platform,
+      bank: bank || null,
       counterparty: counterparty || null,
       notes: notes || null,
       date,
@@ -471,9 +475,27 @@ function TradeFormDialog({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
+              <Label htmlFor="trade-bank">Banco</Label>
+              <Select value={bank} onValueChange={setBank}>
+                <SelectTrigger id="trade-bank">
+                  <SelectValue placeholder="Seleccione" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Banco de Venezuela">Banco de Venezuela</SelectItem>
+                  <SelectItem value="Banesco">Banesco</SelectItem>
+                  <SelectItem value="Mercantil">Mercantil</SelectItem>
+                  <SelectItem value="BNC">BNC</SelectItem>
+                  <SelectItem value="Provincial">Provincial</SelectItem>
+                  <SelectItem value="Pago Móvil">Pago Móvil</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="trade-counterparty">Contraparte</Label>
               <Input id="trade-counterparty" placeholder="Nombre del trader" value={counterparty} onChange={(e) => setCounterparty(e.target.value)} />
             </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Fecha *</Label>
               <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
@@ -1108,6 +1130,7 @@ function TradesSection() {
                     <TableHead className="text-xs text-right">Precio</TableHead>
                     <TableHead className="text-xs text-right">Total</TableHead>
                     <TableHead className="text-xs hidden md:table-cell">Plataforma</TableHead>
+                    <TableHead className="text-xs hidden md:table-cell">Banco</TableHead>
                     <TableHead className="text-xs hidden lg:table-cell">Contraparte</TableHead>
                     <TableHead className="text-xs text-right">Acciones</TableHead>
                   </TableRow>
@@ -1126,6 +1149,7 @@ function TradesSection() {
                       <TableCell className="text-xs py-2 text-right">{formatNumber(trade.price)}</TableCell>
                       <TableCell className="text-xs py-2 text-right font-medium">{formatNumber(trade.total)}</TableCell>
                       <TableCell className="text-xs py-2 hidden md:table-cell">{trade.platform}</TableCell>
+                      <TableCell className="text-xs py-2 hidden md:table-cell">{trade.bank || '-'}</TableCell>
                       <TableCell className="text-xs py-2 hidden lg:table-cell">{trade.counterparty || '-'}</TableCell>
                       <TableCell className="py-2 text-right">
                         <div className="flex gap-1 justify-end">
