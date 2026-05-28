@@ -625,28 +625,28 @@ function DashboardSection({ revision }: { revision: number }) {
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         {/* Monthly Profit/Loss Trend */}
         <Card className="lg:col-span-1">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Activity className="h-4 w-4" />
-              Tendencia Ganancia/Pérdida Mensual
+          <CardHeader className="pb-1 px-3 pt-3">
+            <CardTitle className="text-xs font-medium flex items-center gap-2">
+              <Activity className="h-3 w-3" />
+              Tendencia Ganancia/Pérdida
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-0">
+          <CardContent className="pt-0 px-3 pb-3">
             {monthlyData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={250}>
+              <ResponsiveContainer width="100%" height={160}>
                 <LineChart data={monthlyData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
+                  <XAxis dataKey="name" tick={{ fontSize: 9 }} />
+                  <YAxis tick={{ fontSize: 9 }} />
                   <Tooltip formatter={(value: number) => formatNumber(value)} />
-                  <Line type="monotone" dataKey="profitLoss" name="Ganancia/Pérdida" stroke="#0891b2" strokeWidth={2} dot={{ r: 4 }} />
+                  <Line type="monotone" dataKey="profitLoss" name="Ganancia/Pérdida" stroke="#0891b2" strokeWidth={2} dot={{ r: 3 }} />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-[250px] flex items-center justify-center text-muted-foreground text-sm">
+              <div className="h-[160px] flex items-center justify-center text-muted-foreground text-xs">
                 Sin datos disponibles
               </div>
             )}
@@ -655,17 +655,17 @@ function DashboardSection({ revision }: { revision: number }) {
 
         {/* Asset Distribution Pie Chart */}
         <Card className="lg:col-span-1">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <PieChartIcon className="h-4 w-4" />
+          <CardHeader className="pb-1 px-3 pt-3">
+            <CardTitle className="text-xs font-medium flex items-center gap-2">
+              <PieChartIcon className="h-3 w-3" />
               Distribución por Activo
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-0">
+          <CardContent className="pt-0 px-3 pb-3">
             {assetData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={250}>
+              <ResponsiveContainer width="100%" height={160}>
                 <PieChart>
-                  <Pie data={assetData} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                  <Pie data={assetData} cx="50%" cy="50%" outerRadius={55} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
                     {assetData.map((_entry, index) => (
                       <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                     ))}
@@ -674,7 +674,7 @@ function DashboardSection({ revision }: { revision: number }) {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-[250px] flex items-center justify-center text-muted-foreground text-sm">
+              <div className="h-[160px] flex items-center justify-center text-muted-foreground text-xs">
                 Sin datos disponibles
               </div>
             )}
@@ -683,27 +683,27 @@ function DashboardSection({ revision }: { revision: number }) {
 
         {/* Purchases vs Sales Bar Chart */}
         <Card className="lg:col-span-1">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
+          <CardHeader className="pb-1 px-3 pt-3">
+            <CardTitle className="text-xs font-medium flex items-center gap-2">
+              <BarChart3 className="h-3 w-3" />
               Compras vs Ventas Mensual
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-0">
+          <CardContent className="pt-0 px-3 pb-3">
             {barData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={250}>
+              <ResponsiveContainer width="100%" height={160}>
                 <BarChart data={barData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
+                  <XAxis dataKey="name" tick={{ fontSize: 9 }} />
+                  <YAxis tick={{ fontSize: 9 }} />
                   <Tooltip formatter={(value: number) => formatNumber(value)} />
-                  <Legend />
-                  <Bar dataKey="Compras" fill="#16a34a" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="Ventas" fill="#ea580c" radius={[4, 4, 0, 0]} />
+                  <Legend wrapperStyle={{ fontSize: 10 }} />
+                  <Bar dataKey="Compras" fill="#16a34a" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="Ventas" fill="#ea580c" radius={[3, 3, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-[250px] flex items-center justify-center text-muted-foreground text-sm">
+              <div className="h-[160px] flex items-center justify-center text-muted-foreground text-xs">
                 Sin datos disponibles
               </div>
             )}
@@ -868,8 +868,24 @@ function TradesSection({ revision, refresh }: { revision: number; refresh: () =>
         updateTradeDB(editingTrade.id, data)
         toast.success('Operación actualizada correctamente')
       } else {
-        createTradeDB(data)
-        toast.success('Operación creada correctamente')
+        const trade = createTradeDB(data)
+        // Auto-create bank transaction from P2P trade
+        // Compra = money leaves bank (salida), Venta = money enters bank (entrada)
+        const bankTxType = trade.type === 'compra' ? 'salida' : 'entrada'
+        if (trade.bank && trade.total > 0) {
+          createBankTransactionDB({
+            type: bankTxType,
+            amount: trade.total.toString(),
+            currency: trade.currency,
+            bank: trade.bank,
+            concept: `${trade.type === 'compra' ? 'Compra' : 'Venta'} P2P - ${trade.amount} ${trade.asset}`,
+            reference: null,
+            date: trade.date,
+          })
+          toast.success(`Operación creada + movimiento bancario registrado`)
+        } else {
+          toast.success('Operación creada correctamente')
+        }
       }
       refresh()
     } catch {
