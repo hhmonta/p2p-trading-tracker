@@ -352,7 +352,7 @@ function TradeFormDialog({
   const [amount, setAmount] = useState(trade?.amount?.toString() || '')
   const [price, setPrice] = useState(trade?.price?.toString() || '')
   const [currency, setCurrency] = useState(trade?.currency || 'VES')
-  const [platform, setPlatform] = useState(trade?.platform || 'P2P')
+  const [platform, setPlatform] = useState(trade?.platform || 'Binance')
   const [bank, setBank] = useState(trade?.bank || '')
   const [counterparty, setCounterparty] = useState(trade?.counterparty || '')
   const [notes, setNotes] = useState(trade?.notes || '')
@@ -371,7 +371,7 @@ function TradeFormDialog({
     setAmount('')
     setPrice('')
     setCurrency('VES')
-    setPlatform('P2P')
+    setPlatform('Binance')
     setBank('')
     setCounterparty('')
     setNotes('')
@@ -470,7 +470,21 @@ function TradeFormDialog({
             </div>
             <div className="space-y-2">
               <Label htmlFor="trade-platform">Plataforma</Label>
-              <Input id="trade-platform" value={platform} onChange={(e) => setPlatform(e.target.value)} />
+              <Select value={platform} onValueChange={setPlatform}>
+                <SelectTrigger id="trade-platform">
+                  <SelectValue placeholder="Seleccione" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Binance">Binance</SelectItem>
+                  <SelectItem value="Bybit">Bybit</SelectItem>
+                  <SelectItem value="SkipShift">SkipShift</SelectItem>
+                  <SelectItem value="Zinli">Zinli</SelectItem>
+                  <SelectItem value="Wally">Wally</SelectItem>
+                  <SelectItem value="Apolopay">Apolopay</SelectItem>
+                  <SelectItem value="Skylo">Skylo</SelectItem>
+                  <SelectItem value="Airtm">Airtm</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">

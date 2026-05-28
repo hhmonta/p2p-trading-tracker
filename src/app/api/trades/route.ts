@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
         price: parseFloat(price),
         total: total ? parseFloat(total) : parseFloat(amount) * parseFloat(price),
         currency: currency || 'VES',
-        platform: platform || 'P2P',
+        platform: platform || 'Binance',
         bank: bank || null,
         counterparty: counterparty || null,
         notes: notes || null,
