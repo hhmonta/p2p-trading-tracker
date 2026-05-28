@@ -473,7 +473,19 @@ function BankFormDialog({
             </div>
             <div className="space-y-2">
               <Label htmlFor="bank-bank">Banco</Label>
-              <Input id="bank-bank" placeholder="Nombre del banco" value={bank} onChange={(e) => setBank(e.target.value)} />
+              <Select value={bank} onValueChange={setBank}>
+                <SelectTrigger id="bank-bank">
+                  <SelectValue placeholder="Seleccione" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Banco de Venezuela">Banco de Venezuela</SelectItem>
+                  <SelectItem value="Banesco">Banesco</SelectItem>
+                  <SelectItem value="Mercantil">Mercantil</SelectItem>
+                  <SelectItem value="BNC">BNC</SelectItem>
+                  <SelectItem value="Provincial">Provincial</SelectItem>
+                  <SelectItem value="Pago Móvil">Pago Móvil</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -1071,6 +1083,41 @@ function BankSection({ revision, refresh }: { revision: number; refresh: () => v
     return Math.ceil(transactions.length / pageSize)
   }, [transactions])
 
+  const bankStats = useMemo(() => {
+    const allTx = listBankTransactions()
+    const entradas = allTx.filter(t => t.type === 'entrada')
+    const salidas = allTx.filter(t => t.type === 'salida')
+    const totalEntradas = entradas.reduce((sum, t) => sum + t.amount, 0)
+    const totalSalidas = salidas.reduce((sum, t) => sum + t.amount, 0)
+    const balance = totalEntradas - totalSalidas
+
+    // Breakdown by bank
+    const bankMap = new Map<string, { entradas: number; salidas: number; balance: number }>()
+    for (const tx of allTx) {
+      const bankName = tx.bank || 'Sin Banco'
+      const entry = bankMap.get(bankName) || { entradas: 0, salidas: 0, balance: 0 }
+      if (tx.type === 'entrada') entry.entradas += tx.amount
+      else entry.salidas += tx.amount
+      entry.balance = entry.entradas - entry.salidas
+      bankMap.set(bankName, entry)
+    }
+    const byBank = Array.from(bankMap.entries()).map(([bank, data]) => ({ bank, ...data }))
+
+    // Breakdown by currency
+    const currMap = new Map<string, { entradas: number; salidas: number; balance: number }>()
+    for (const tx of allTx) {
+      const curr = tx.currency || 'VES'
+      const entry = currMap.get(curr) || { entradas: 0, salidas: 0, balance: 0 }
+      if (tx.type === 'entrada') entry.entradas += tx.amount
+      else entry.salidas += tx.amount
+      entry.balance = entry.entradas - entry.salidas
+      currMap.set(curr, entry)
+    }
+    const byCurrency = Array.from(currMap.entries()).map(([currency, data]) => ({ currency, ...data }))
+
+    return { totalEntradas, totalSalidas, balance, byBank, byCurrency }
+  }, [revision])
+
   const handleSubmit = (data: Record<string, unknown>) => {
     try {
       if (editingTx) {
@@ -1112,6 +1159,129 @@ function BankSection({ revision, refresh }: { revision: number; refresh: () => v
           Nueva Transacción
         </Button>
       </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-3 gap-2">
+        <Card className="border-l-4 border-l-green-500">
+          <CardContent className="p-3">
+            <div className="flex items-center justify-between gap-1">
+              <div className="min-w-0">
+                <p className="text-[10px] font-medium text-muted-foreground">Total Entradas</p>
+                <p className="text-base font-bold text-green-600 truncate">{formatNumber(bankStats.totalEntradas)}</p>
+              </div>
+              <div className="h-7 w-7 shrink-0 rounded-full bg-green-100 flex items-center justify-center">
+                <ArrowUpCircle className="h-3.5 w-3.5 text-green-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-red-500">
+          <CardContent className="p-3">
+            <div className="flex items-center justify-between gap-1">
+              <div className="min-w-0">
+                <p className="text-[10px] font-medium text-muted-foreground">Total Salidas</p>
+                <p className="text-base font-bold text-red-600 truncate">{formatNumber(bankStats.totalSalidas)}</p>
+              </div>
+              <div className="h-7 w-7 shrink-0 rounded-full bg-red-100 flex items-center justify-center">
+                <ArrowDownCircle className="h-3.5 w-3.5 text-red-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className={`border-l-4 ${bankStats.balance >= 0 ? 'border-l-cyan-500' : 'border-l-red-500'}`}>
+          <CardContent className="p-3">
+            <div className="flex items-center justify-between gap-1">
+              <div className="min-w-0">
+                <p className="text-[10px] font-medium text-muted-foreground">Balance</p>
+                <p className={`text-base font-bold ${bankStats.balance >= 0 ? 'text-cyan-600' : 'text-red-600'} truncate`}>
+                  {bankStats.balance >= 0 ? '+' : ''}{formatNumber(bankStats.balance)}
+                </p>
+              </div>
+              <div className={`h-7 w-7 shrink-0 rounded-full ${bankStats.balance >= 0 ? 'bg-cyan-100' : 'bg-red-100'} flex items-center justify-center`}>
+                <Wallet className={`h-3.5 w-3.5 ${bankStats.balance >= 0 ? 'text-cyan-600' : 'text-red-600'}`} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Bank Breakdown */}
+      {bankStats.byBank.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Building2 className="h-4 w-4" />
+              Resumen por Banco
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="overflow-x-auto -webkit-overflow-scrolling-touch">
+              <Table className="min-w-[400px]">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs">Banco</TableHead>
+                    <TableHead className="text-xs text-right">Entradas</TableHead>
+                    <TableHead className="text-xs text-right">Salidas</TableHead>
+                    <TableHead className="text-xs text-right">Balance</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {bankStats.byBank.map((item) => (
+                    <TableRow key={item.bank}>
+                      <TableCell className="text-xs py-2 font-medium">{item.bank}</TableCell>
+                      <TableCell className="text-xs py-2 text-right text-green-600">{formatNumber(item.entradas)}</TableCell>
+                      <TableCell className="text-xs py-2 text-right text-red-600">{formatNumber(item.salidas)}</TableCell>
+                      <TableCell className={`text-xs py-2 text-right font-semibold ${item.balance >= 0 ? 'text-cyan-600' : 'text-red-600'}`}>
+                        {item.balance >= 0 ? '+' : ''}{formatNumber(item.balance)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Currency Breakdown */}
+      {bankStats.byCurrency.length > 1 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <DollarSign className="h-4 w-4" />
+              Resumen por Moneda
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="overflow-x-auto -webkit-overflow-scrolling-touch">
+              <Table className="min-w-[350px]">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs">Moneda</TableHead>
+                    <TableHead className="text-xs text-right">Entradas</TableHead>
+                    <TableHead className="text-xs text-right">Salidas</TableHead>
+                    <TableHead className="text-xs text-right">Balance</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {bankStats.byCurrency.map((item) => (
+                    <TableRow key={item.currency}>
+                      <TableCell className="text-xs py-2 font-medium">{item.currency}</TableCell>
+                      <TableCell className="text-xs py-2 text-right text-green-600">{formatNumber(item.entradas)}</TableCell>
+                      <TableCell className="text-xs py-2 text-right text-red-600">{formatNumber(item.salidas)}</TableCell>
+                      <TableCell className={`text-xs py-2 text-right font-semibold ${item.balance >= 0 ? 'text-cyan-600' : 'text-red-600'}`}>
+                        {item.balance >= 0 ? '+' : ''}{formatNumber(item.balance)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Filters */}
       <Card>
