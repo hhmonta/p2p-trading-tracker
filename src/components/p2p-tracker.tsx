@@ -564,8 +564,8 @@ function DashboardSection({ revision }: { revision: number }) {
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
                 <p className="text-[11px] font-medium text-muted-foreground">Total Compras</p>
-                <p className="text-lg font-bold text-green-600 truncate">{formatNumber(stats.totalCompras)}</p>
-                <p className="text-[10px] text-muted-foreground">{stats.countCompras} ops · VES</p>
+                <p className="text-lg font-bold text-green-600 truncate">{formatNumber(stats.totalComprasUSDT)}</p>
+                <p className="text-[10px] text-muted-foreground">{stats.countCompras} ops · USDT</p>
               </div>
               <div className="h-8 w-8 shrink-0 rounded-full bg-green-100 flex items-center justify-center">
                 <TrendingDown className="h-4 w-4 text-green-600" />
@@ -579,8 +579,8 @@ function DashboardSection({ revision }: { revision: number }) {
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
                 <p className="text-[11px] font-medium text-muted-foreground">Total Ventas</p>
-                <p className="text-lg font-bold text-orange-600 truncate">{formatNumber(stats.totalVentas)}</p>
-                <p className="text-[10px] text-muted-foreground">{stats.countVentas} ops · VES</p>
+                <p className="text-lg font-bold text-orange-600 truncate">{formatNumber(stats.totalVentasUSDT)}</p>
+                <p className="text-[10px] text-muted-foreground">{stats.countVentas} ops · USDT</p>
               </div>
               <div className="h-8 w-8 shrink-0 rounded-full bg-orange-100 flex items-center justify-center">
                 <TrendingUp className="h-4 w-4 text-orange-600" />
@@ -589,18 +589,18 @@ function DashboardSection({ revision }: { revision: number }) {
           </CardContent>
         </Card>
 
-        <Card className={`border-l-4 ${stats.netProfitLoss >= 0 ? 'border-l-green-500' : 'border-l-red-500'}`}>
+        <Card className={`border-l-4 ${stats.netProfitLossUSDT >= 0 ? 'border-l-green-500' : 'border-l-red-500'}`}>
           <CardContent className="p-3">
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
                 <p className="text-[11px] font-medium text-muted-foreground">Ganancia/Pérdida</p>
-                <p className={`text-lg font-bold ${stats.netProfitLoss >= 0 ? 'text-green-600' : 'text-red-600'} truncate`}>
-                  {stats.netProfitLoss >= 0 ? '+' : ''}{formatNumber(stats.netProfitLoss)}
+                <p className={`text-lg font-bold ${stats.netProfitLossUSDT >= 0 ? 'text-green-600' : 'text-red-600'} truncate`}>
+                  {stats.netProfitLossUSDT >= 0 ? '+' : ''}{formatNumber(stats.netProfitLossUSDT)}
                 </p>
-                <p className="text-[10px] text-muted-foreground">VES</p>
+                <p className="text-[10px] text-muted-foreground">USDT</p>
               </div>
-              <div className={`h-8 w-8 shrink-0 rounded-full ${stats.netProfitLoss >= 0 ? 'bg-green-100' : 'bg-red-100'} flex items-center justify-center`}>
-                <DollarSign className={`h-4 w-4 ${stats.netProfitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`} />
+              <div className={`h-8 w-8 shrink-0 rounded-full ${stats.netProfitLossUSDT >= 0 ? 'bg-green-100' : 'bg-red-100'} flex items-center justify-center`}>
+                <DollarSign className={`h-4 w-4 ${stats.netProfitLossUSDT >= 0 ? 'text-green-600' : 'text-red-600'}`} />
               </div>
             </div>
           </CardContent>
@@ -799,24 +799,24 @@ function DashboardSection({ revision }: { revision: number }) {
             <CardTitle className="text-sm font-medium">Ganancia/Pérdida por Activo</CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="max-h-64 overflow-y-auto">
-              <Table>
+            <div className="overflow-x-auto -webkit-overflow-scrolling-touch">
+              <Table className="min-w-[500px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Activo</TableHead>
-                    <TableHead className="text-right">Total Compras</TableHead>
-                    <TableHead className="text-right">Total Ventas</TableHead>
-                    <TableHead className="text-right">Ganancia/Pérdida</TableHead>
+                    <TableHead className="text-xs">Activo</TableHead>
+                    <TableHead className="text-xs text-right">Compras (USDT)</TableHead>
+                    <TableHead className="text-xs text-right">Ventas (USDT)</TableHead>
+                    <TableHead className="text-xs text-right">Ganancia/Pérdida</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {stats.profitLossByAsset.map((item) => (
                     <TableRow key={item.asset}>
-                      <TableCell className="font-medium">{item.asset}</TableCell>
-                      <TableCell className="text-right text-green-600">{formatNumber(item.compras)}</TableCell>
-                      <TableCell className="text-right text-orange-600">{formatNumber(item.ventas)}</TableCell>
-                      <TableCell className={`text-right font-semibold ${item.profitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {item.profitLoss >= 0 ? '+' : ''}{formatNumber(item.profitLoss)}
+                      <TableCell className="text-xs py-2 font-medium">{item.asset}</TableCell>
+                      <TableCell className="text-xs py-2 text-right text-green-600">{formatNumber(item.comprasAmount)}</TableCell>
+                      <TableCell className="text-xs py-2 text-right text-orange-600">{formatNumber(item.ventasAmount)}</TableCell>
+                      <TableCell className={`text-xs py-2 text-right font-semibold ${item.profitLossAmount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {item.profitLossAmount >= 0 ? '+' : ''}{formatNumber(item.profitLossAmount)} USDT
                       </TableCell>
                     </TableRow>
                   ))}
