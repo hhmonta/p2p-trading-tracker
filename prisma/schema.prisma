@@ -1,0 +1,37 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Trade {
+  id           String   @id @default(cuid())
+  type         String   // "compra" or "venta"
+  asset        String   // e.g., "USDT", "BTC"
+  amount       Float    // amount of asset
+  price        Float    // price per unit in local currency
+  total        Float    // total in local currency (amount * price)
+  currency     String   @default("CUP") // local currency
+  platform     String   @default("P2P") // platform name
+  counterparty String?  // who you traded with
+  notes        String?  // additional notes
+  date         DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model BankTransaction {
+  id        String   @id @default(cuid())
+  type      String   // "entrada" or "salida"
+  amount    Float    // amount
+  currency  String   @default("CUP")
+  concept   String?  // concept/description
+  reference String?  // reference number
+  bank      String?  // bank name
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
