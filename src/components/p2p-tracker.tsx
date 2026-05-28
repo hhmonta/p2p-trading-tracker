@@ -544,68 +544,68 @@ function DashboardSection({ revision }: { revision: number }) {
   }))
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
         <Card className="border-l-4 border-l-green-500">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Compras</p>
-                <p className="text-2xl font-bold text-green-600">{formatNumber(stats.totalCompras)}</p>
-                <p className="text-xs text-muted-foreground mt-1">{stats.countCompras} operaciones</p>
+          <CardContent className="p-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[11px] font-medium text-muted-foreground">Total Compras</p>
+                <p className="text-lg font-bold text-green-600 truncate">{formatNumber(stats.totalCompras)}</p>
+                <p className="text-[10px] text-muted-foreground">{stats.countCompras} ops · VES</p>
               </div>
-              <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
-                <TrendingDown className="h-6 w-6 text-green-600" />
+              <div className="h-8 w-8 shrink-0 rounded-full bg-green-100 flex items-center justify-center">
+                <TrendingDown className="h-4 w-4 text-green-600" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-orange-500">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Ventas</p>
-                <p className="text-2xl font-bold text-orange-600">{formatNumber(stats.totalVentas)}</p>
-                <p className="text-xs text-muted-foreground mt-1">{stats.countVentas} operaciones</p>
+          <CardContent className="p-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[11px] font-medium text-muted-foreground">Total Ventas</p>
+                <p className="text-lg font-bold text-orange-600 truncate">{formatNumber(stats.totalVentas)}</p>
+                <p className="text-[10px] text-muted-foreground">{stats.countVentas} ops · VES</p>
               </div>
-              <div className="h-12 w-12 rounded-full bg-orange-100 flex items-center justify-center">
-                <TrendingUp className="h-6 w-6 text-orange-600" />
+              <div className="h-8 w-8 shrink-0 rounded-full bg-orange-100 flex items-center justify-center">
+                <TrendingUp className="h-4 w-4 text-orange-600" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className={`border-l-4 ${stats.netProfitLoss >= 0 ? 'border-l-green-500' : 'border-l-red-500'}`}>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Ganancia/Pérdida Neta</p>
-                <p className={`text-2xl font-bold ${stats.netProfitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+          <CardContent className="p-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[11px] font-medium text-muted-foreground">Ganancia/Pérdida</p>
+                <p className={`text-lg font-bold ${stats.netProfitLoss >= 0 ? 'text-green-600' : 'text-red-600'} truncate`}>
                   {stats.netProfitLoss >= 0 ? '+' : ''}{formatNumber(stats.netProfitLoss)}
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">CUP</p>
+                <p className="text-[10px] text-muted-foreground">VES</p>
               </div>
-              <div className={`h-12 w-12 rounded-full ${stats.netProfitLoss >= 0 ? 'bg-green-100' : 'bg-red-100'} flex items-center justify-center`}>
-                <DollarSign className={`h-6 w-6 ${stats.netProfitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`} />
+              <div className={`h-8 w-8 shrink-0 rounded-full ${stats.netProfitLoss >= 0 ? 'bg-green-100' : 'bg-red-100'} flex items-center justify-center`}>
+                <DollarSign className={`h-4 w-4 ${stats.netProfitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`} />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-cyan-500">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Balance Bancario</p>
-                <p className={`text-2xl font-bold ${stats.bankBalance >= 0 ? 'text-cyan-600' : 'text-red-600'}`}>
+          <CardContent className="p-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[11px] font-medium text-muted-foreground">Balance Bancario</p>
+                <p className={`text-lg font-bold ${stats.bankBalance >= 0 ? 'text-cyan-600' : 'text-red-600'} truncate`}>
                   {formatNumber(stats.bankBalance)}
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">Entradas: {formatNumber(stats.totalEntradas)} | Salidas: {formatNumber(stats.totalSalidas)}</p>
+                <p className="text-[10px] text-muted-foreground">VES</p>
               </div>
-              <div className="h-12 w-12 rounded-full bg-cyan-100 flex items-center justify-center">
-                <Wallet className="h-6 w-6 text-cyan-600" />
+              <div className="h-8 w-8 shrink-0 rounded-full bg-cyan-100 flex items-center justify-center">
+                <Wallet className="h-4 w-4 text-cyan-600" />
               </div>
             </div>
           </CardContent>
@@ -943,8 +943,8 @@ function TradesSection({ revision, refresh }: { revision: number; refresh: () =>
               </Button>
             </div>
           ) : (
-            <ScrollArea className="w-full">
-              <Table>
+            <div className="overflow-x-auto -webkit-overflow-scrolling-touch">
+              <Table className="min-w-[700px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="text-xs">Fecha</TableHead>
@@ -953,9 +953,9 @@ function TradesSection({ revision, refresh }: { revision: number; refresh: () =>
                     <TableHead className="text-xs text-right">Cantidad</TableHead>
                     <TableHead className="text-xs text-right">Precio</TableHead>
                     <TableHead className="text-xs text-right">Total</TableHead>
-                    <TableHead className="text-xs hidden md:table-cell">Plataforma</TableHead>
-                    <TableHead className="text-xs hidden md:table-cell">Banco</TableHead>
-                    <TableHead className="text-xs hidden lg:table-cell">Contraparte</TableHead>
+                    <TableHead className="text-xs">Plataforma</TableHead>
+                    <TableHead className="text-xs">Banco</TableHead>
+                    <TableHead className="text-xs">Contraparte</TableHead>
                     <TableHead className="text-xs text-right">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -972,9 +972,9 @@ function TradesSection({ revision, refresh }: { revision: number; refresh: () =>
                       <TableCell className="text-xs py-2 text-right">{formatNumber(trade.amount)}</TableCell>
                       <TableCell className="text-xs py-2 text-right">{formatNumber(trade.price)}</TableCell>
                       <TableCell className="text-xs py-2 text-right font-medium">{formatNumber(trade.total)}</TableCell>
-                      <TableCell className="text-xs py-2 hidden md:table-cell">{trade.platform}</TableCell>
-                      <TableCell className="text-xs py-2 hidden md:table-cell">{trade.bank || '-'}</TableCell>
-                      <TableCell className="text-xs py-2 hidden lg:table-cell">{trade.counterparty || '-'}</TableCell>
+                      <TableCell className="text-xs py-2">{trade.platform}</TableCell>
+                      <TableCell className="text-xs py-2">{trade.bank || '-'}</TableCell>
+                      <TableCell className="text-xs py-2">{trade.counterparty || '-'}</TableCell>
                       <TableCell className="py-2 text-right">
                         <div className="flex gap-1 justify-end">
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingTrade(trade); setFormOpen(true) }}>
@@ -989,7 +989,7 @@ function TradesSection({ revision, refresh }: { revision: number; refresh: () =>
                   ))}
                 </TableBody>
               </Table>
-            </ScrollArea>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -1157,17 +1157,17 @@ function BankSection({ revision, refresh }: { revision: number; refresh: () => v
               </Button>
             </div>
           ) : (
-            <ScrollArea className="w-full">
-              <Table>
+            <div className="overflow-x-auto -webkit-overflow-scrolling-touch">
+              <Table className="min-w-[600px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="text-xs">Fecha</TableHead>
                     <TableHead className="text-xs">Tipo</TableHead>
                     <TableHead className="text-xs text-right">Monto</TableHead>
                     <TableHead className="text-xs">Moneda</TableHead>
-                    <TableHead className="text-xs hidden md:table-cell">Banco</TableHead>
-                    <TableHead className="text-xs hidden lg:table-cell">Concepto</TableHead>
-                    <TableHead className="text-xs hidden lg:table-cell">Referencia</TableHead>
+                    <TableHead className="text-xs">Banco</TableHead>
+                    <TableHead className="text-xs">Concepto</TableHead>
+                    <TableHead className="text-xs">Referencia</TableHead>
                     <TableHead className="text-xs text-right">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -1184,9 +1184,9 @@ function BankSection({ revision, refresh }: { revision: number; refresh: () => v
                         {tx.type === 'entrada' ? '+' : '-'}{formatNumber(tx.amount)}
                       </TableCell>
                       <TableCell className="text-xs py-2">{tx.currency}</TableCell>
-                      <TableCell className="text-xs py-2 hidden md:table-cell">{tx.bank || '-'}</TableCell>
-                      <TableCell className="text-xs py-2 hidden lg:table-cell">{tx.concept || '-'}</TableCell>
-                      <TableCell className="text-xs py-2 hidden lg:table-cell">{tx.reference || '-'}</TableCell>
+                      <TableCell className="text-xs py-2">{tx.bank || '-'}</TableCell>
+                      <TableCell className="text-xs py-2">{tx.concept || '-'}</TableCell>
+                      <TableCell className="text-xs py-2">{tx.reference || '-'}</TableCell>
                       <TableCell className="py-2 text-right">
                         <div className="flex gap-1 justify-end">
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingTx(tx); setFormOpen(true) }}>
@@ -1201,7 +1201,7 @@ function BankSection({ revision, refresh }: { revision: number; refresh: () => v
                   ))}
                 </TableBody>
               </Table>
-            </ScrollArea>
+            </div>
           )}
         </CardContent>
       </Card>
