@@ -1,10 +1,25 @@
 'use client'
 
 import { useState, useMemo, useCallback } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { format, parseISO, isValid } from 'date-fns'
 import { es } from 'date-fns/locale'
+
+// Local DB
+import {
+  listTrades,
+  createTrade as createTradeDB,
+  updateTrade as updateTradeDB,
+  deleteTrade as deleteTradeDB,
+  listBankTransactions,
+  createBankTransaction as createBankTransactionDB,
+  updateBankTransaction as updateBankTransactionDB,
+  deleteBankTransaction as deleteBankTransactionDB,
+  computeStats,
+  type Trade,
+  type BankTransaction,
+  type Stats,
+} from '@/lib/local-db'
 
 // UI Components
 import { Button } from '@/components/ui/button'
@@ -68,52 +83,6 @@ import {
 // Types
 type Section = 'dashboard' | 'trades' | 'bank'
 
-interface Trade {
-  id: string
-  type: string
-  asset: string
-  amount: number
-  price: number
-  total: number
-  currency: string
-  platform: string
-  bank: string | null
-  counterparty: string | null
-  notes: string | null
-  date: string
-  createdAt: string
-  updatedAt: string
-}
-
-interface BankTransaction {
-  id: string
-  type: string
-  amount: number
-  currency: string
-  concept: string | null
-  reference: string | null
-  bank: string | null
-  date: string
-  createdAt: string
-  updatedAt: string
-}
-
-interface Stats {
-  totalCompras: number
-  countCompras: number
-  totalVentas: number
-  countVentas: number
-  netProfitLoss: number
-  profitLossByAsset: { asset: string; compras: number; ventas: number; profitLoss: number }[]
-  monthlyBreakdown: { month: string; compras: number; ventas: number; profitLoss: number }[]
-  bankBalance: number
-  totalEntradas: number
-  totalSalidas: number
-  recentTrades: Trade[]
-  recentBankTransactions: BankTransaction[]
-  assetDistribution: { asset: string; total: number }[]
-}
-
 // Helpers
 function formatNumber(num: number): string {
   return num.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -141,151 +110,11 @@ function formatDateForInput(dateStr: string): string {
 
 const CHART_COLORS = ['#16a34a', '#ea580c', '#0891b2', '#9333ea', '#e11d48', '#ca8a04']
 
-// API hooks
-function useStats() {
-  return useQuery<Stats>({
-    queryKey: ['stats'],
-    queryFn: async () => {
-      const res = await fetch('/api/stats')
-      if (!res.ok) throw new Error('Error cargando estadísticas')
-      return res.json()
-    },
-  })
-}
-
-function useTrades(filters?: { type?: string; asset?: string; startDate?: string; endDate?: string }) {
-  const params = new URLSearchParams()
-  if (filters?.type) params.set('type', filters.type)
-  if (filters?.asset) params.set('asset', filters.asset)
-  if (filters?.startDate) params.set('startDate', filters.startDate)
-  if (filters?.endDate) params.set('endDate', filters.endDate)
-
-  return useQuery<Trade[]>({
-    queryKey: ['trades', filters],
-    queryFn: async () => {
-      const res = await fetch(`/api/trades?${params.toString()}`)
-      if (!res.ok) throw new Error('Error cargando operaciones')
-      return res.json()
-    },
-  })
-}
-
-function useBankTransactions(filters?: { type?: string; startDate?: string; endDate?: string }) {
-  const params = new URLSearchParams()
-  if (filters?.type) params.set('type', filters.type)
-  if (filters?.startDate) params.set('startDate', filters.startDate)
-  if (filters?.endDate) params.set('endDate', filters.endDate)
-
-  return useQuery<BankTransaction[]>({
-    queryKey: ['bank', filters],
-    queryFn: async () => {
-      const res = await fetch(`/api/bank?${params.toString()}`)
-      if (!res.ok) throw new Error('Error cargando transacciones')
-      return res.json()
-    },
-  })
-}
-
-function useCreateTrade() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: async (data: Record<string, unknown>) => {
-      const res = await fetch('/api/trades', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
-      if (!res.ok) throw new Error('Error creando operación')
-      return res.json()
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['trades'] })
-      qc.invalidateQueries({ queryKey: ['stats'] })
-      toast.success('Operación creada correctamente')
-    },
-    onError: () => toast.error('Error al crear operación'),
-  })
-}
-
-function useUpdateTrade() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: async ({ id, ...data }: { id: string } & Record<string, unknown>) => {
-      const res = await fetch(`/api/trades/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
-      if (!res.ok) throw new Error('Error actualizando operación')
-      return res.json()
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['trades'] })
-      qc.invalidateQueries({ queryKey: ['stats'] })
-      toast.success('Operación actualizada correctamente')
-    },
-    onError: () => toast.error('Error al actualizar operación'),
-  })
-}
-
-function useDeleteTrade() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const res = await fetch(`/api/trades/${id}`, { method: 'DELETE' })
-      if (!res.ok) throw new Error('Error eliminando operación')
-      return res.json()
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['trades'] })
-      qc.invalidateQueries({ queryKey: ['stats'] })
-      toast.success('Operación eliminada correctamente')
-    },
-    onError: () => toast.error('Error al eliminar operación'),
-  })
-}
-
-function useCreateBankTransaction() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: async (data: Record<string, unknown>) => {
-      const res = await fetch('/api/bank', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
-      if (!res.ok) throw new Error('Error creando transacción')
-      return res.json()
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['bank'] })
-      qc.invalidateQueries({ queryKey: ['stats'] })
-      toast.success('Transacción creada correctamente')
-    },
-    onError: () => toast.error('Error al crear transacción'),
-  })
-}
-
-function useUpdateBankTransaction() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: async ({ id, ...data }: { id: string } & Record<string, unknown>) => {
-      const res = await fetch(`/api/bank/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
-      if (!res.ok) throw new Error('Error actualizando transacción')
-      return res.json()
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['bank'] })
-      qc.invalidateQueries({ queryKey: ['stats'] })
-      toast.success('Transacción actualizada correctamente')
-    },
-    onError: () => toast.error('Error al actualizar transacción'),
-  })
-}
-
-function useDeleteBankTransaction() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const res = await fetch(`/api/bank/${id}`, { method: 'DELETE' })
-      if (!res.ok) throw new Error('Error eliminando transacción')
-      return res.json()
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['bank'] })
-      qc.invalidateQueries({ queryKey: ['stats'] })
-      toast.success('Transacción eliminada correctamente')
-    },
-    onError: () => toast.error('Error al eliminar transacción'),
-  })
+// Custom hook to force re-render when local data changes
+function useLocalData() {
+  const [revision, setRevision] = useState(0)
+  const refresh = useCallback(() => setRevision(r => r + 1), [])
+  return { revision, refresh }
 }
 
 // ─── Sidebar Content ────────────────────────────────────────────────────────
@@ -339,13 +168,11 @@ function TradeFormDialog({
   onOpenChange,
   trade,
   onSubmit,
-  isPending,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   trade?: Trade | null
   onSubmit: (data: Record<string, unknown>) => void
-  isPending: boolean
 }) {
   const [type, setType] = useState(trade?.type || 'compra')
   const [asset, setAsset] = useState(trade?.asset || 'USDT')
@@ -542,8 +369,8 @@ function TradeFormDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => { resetForm(); onOpenChange(false) }}>Cancelar</Button>
-          <Button onClick={handleSubmit} disabled={isPending}>
-            {isPending ? 'Guardando...' : trade ? 'Actualizar' : 'Crear'}
+          <Button onClick={handleSubmit}>
+            {trade ? 'Actualizar' : 'Crear'}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -558,13 +385,11 @@ function BankFormDialog({
   onOpenChange,
   transaction,
   onSubmit,
-  isPending,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   transaction?: BankTransaction | null
   onSubmit: (data: Record<string, unknown>) => void
-  isPending: boolean
 }) {
   const [type, setType] = useState(transaction?.type || 'entrada')
   const [amount, setAmount] = useState(transaction?.amount?.toString() || '')
@@ -688,8 +513,8 @@ function BankFormDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => { resetForm(); onOpenChange(false) }}>Cancelar</Button>
-          <Button onClick={handleSubmit} disabled={isPending}>
-            {isPending ? 'Guardando...' : transaction ? 'Actualizar' : 'Crear'}
+          <Button onClick={handleSubmit}>
+            {transaction ? 'Actualizar' : 'Crear'}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -699,27 +524,8 @@ function BankFormDialog({
 
 // ─── Dashboard Section ──────────────────────────────────────────────────────
 
-function DashboardSection() {
-  const { data: stats, isLoading } = useStats()
-
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <Card key={i}><CardContent className="p-6"><Skeleton className="h-20 w-full" /></CardContent></Card>
-          ))}
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (
-            <Card key={i}><CardContent className="p-6"><Skeleton className="h-64 w-full" /></CardContent></Card>
-          ))}
-        </div>
-      </div>
-    )
-  }
-
-  if (!stats) return null
+function DashboardSection({ revision }: { revision: number }) {
+  const stats = useMemo(() => computeStats(), [revision])
 
   const monthlyData = stats.monthlyBreakdown.map((m) => ({
     ...m,
@@ -1014,8 +820,7 @@ function DashboardSection() {
 
 // ─── Trades Section ─────────────────────────────────────────────────────────
 
-function TradesSection() {
-  const queryClient = useQueryClient()
+function TradesSection({ revision, refresh }: { revision: number; refresh: () => void }) {
   const [filterType, setFilterType] = useState<string>('')
   const [filterAsset, setFilterAsset] = useState<string>('')
   const [filterStartDate, setFilterStartDate] = useState<string>('')
@@ -1034,33 +839,42 @@ function TradesSection() {
     endDate: filterEndDate || undefined,
   }), [filterType, filterAsset, filterStartDate, filterEndDate])
 
-  const { data: trades, isLoading } = useTrades(filters)
-  const createTrade = useCreateTrade()
-  const updateTrade = useUpdateTrade()
-  const deleteTrade = useDeleteTrade()
+  const trades = useMemo(() => listTrades(filters), [revision, filters])
 
   const filteredTrades = useMemo(() => {
-    if (!trades) return []
     const start = (page - 1) * pageSize
     return trades.slice(start, start + pageSize)
   }, [trades, page])
 
   const totalPages = useMemo(() => {
-    if (!trades) return 1
     return Math.ceil(trades.length / pageSize)
   }, [trades])
 
   const handleSubmit = (data: Record<string, unknown>) => {
-    if (editingTrade) {
-      updateTrade.mutate({ id: editingTrade.id, ...data })
-    } else {
-      createTrade.mutate(data)
+    try {
+      if (editingTrade) {
+        updateTradeDB(editingTrade.id, data)
+        toast.success('Operación actualizada correctamente')
+      } else {
+        createTradeDB(data)
+        toast.success('Operación creada correctamente')
+      }
+      refresh()
+    } catch {
+      toast.error(editingTrade ? 'Error al actualizar operación' : 'Error al crear operación')
     }
   }
 
   const handleDelete = () => {
     if (deleteId) {
-      deleteTrade.mutate(deleteId, { onSettled: () => setDeleteId(null) })
+      try {
+        deleteTradeDB(deleteId)
+        toast.success('Operación eliminada correctamente')
+        refresh()
+      } catch {
+        toast.error('Error al eliminar operación')
+      }
+      setDeleteId(null)
     }
   }
 
@@ -1120,11 +934,7 @@ function TradesSection() {
       {/* Table */}
       <Card>
         <CardContent className="p-0">
-          {isLoading ? (
-            <div className="p-6 space-y-3">
-              {[1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
-            </div>
-          ) : !trades || trades.length === 0 ? (
+          {trades.length === 0 ? (
             <div className="p-12 text-center">
               <ArrowLeftRight className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">No hay operaciones registradas</p>
@@ -1185,7 +995,7 @@ function TradesSection() {
       </Card>
 
       {/* Pagination */}
-      {trades && trades.length > pageSize && (
+      {trades.length > pageSize && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
             Mostrando {((page - 1) * pageSize) + 1}-{Math.min(page * pageSize, trades.length)} de {trades.length}
@@ -1208,7 +1018,6 @@ function TradesSection() {
         onOpenChange={setFormOpen}
         trade={editingTrade}
         onSubmit={handleSubmit}
-        isPending={createTrade.isPending || updateTrade.isPending}
       />
 
       {/* Delete Confirmation */}
@@ -1234,7 +1043,7 @@ function TradesSection() {
 
 // ─── Bank Section ───────────────────────────────────────────────────────────
 
-function BankSection() {
+function BankSection({ revision, refresh }: { revision: number; refresh: () => void }) {
   const [filterType, setFilterType] = useState<string>('')
   const [filterStartDate, setFilterStartDate] = useState<string>('')
   const [filterEndDate, setFilterEndDate] = useState<string>('')
@@ -1251,33 +1060,42 @@ function BankSection() {
     endDate: filterEndDate || undefined,
   }), [filterType, filterStartDate, filterEndDate])
 
-  const { data: transactions, isLoading } = useBankTransactions(filters)
-  const createTx = useCreateBankTransaction()
-  const updateTx = useUpdateBankTransaction()
-  const deleteTx = useDeleteBankTransaction()
+  const transactions = useMemo(() => listBankTransactions(filters), [revision, filters])
 
   const filteredTx = useMemo(() => {
-    if (!transactions) return []
     const start = (page - 1) * pageSize
     return transactions.slice(start, start + pageSize)
   }, [transactions, page])
 
   const totalPages = useMemo(() => {
-    if (!transactions) return 1
     return Math.ceil(transactions.length / pageSize)
   }, [transactions])
 
   const handleSubmit = (data: Record<string, unknown>) => {
-    if (editingTx) {
-      updateTx.mutate({ id: editingTx.id, ...data })
-    } else {
-      createTx.mutate(data)
+    try {
+      if (editingTx) {
+        updateBankTransactionDB(editingTx.id, data)
+        toast.success('Transacción actualizada correctamente')
+      } else {
+        createBankTransactionDB(data)
+        toast.success('Transacción creada correctamente')
+      }
+      refresh()
+    } catch {
+      toast.error(editingTx ? 'Error al actualizar transacción' : 'Error al crear transacción')
     }
   }
 
   const handleDelete = () => {
     if (deleteId) {
-      deleteTx.mutate(deleteId, { onSettled: () => setDeleteId(null) })
+      try {
+        deleteBankTransactionDB(deleteId)
+        toast.success('Transacción eliminada correctamente')
+        refresh()
+      } catch {
+        toast.error('Error al eliminar transacción')
+      }
+      setDeleteId(null)
     }
   }
 
@@ -1330,11 +1148,7 @@ function BankSection() {
       {/* Table */}
       <Card>
         <CardContent className="p-0">
-          {isLoading ? (
-            <div className="p-6 space-y-3">
-              {[1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
-            </div>
-          ) : !transactions || transactions.length === 0 ? (
+          {transactions.length === 0 ? (
             <div className="p-12 text-center">
               <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">No hay transacciones bancarias registradas</p>
@@ -1393,7 +1207,7 @@ function BankSection() {
       </Card>
 
       {/* Pagination */}
-      {transactions && transactions.length > pageSize && (
+      {transactions.length > pageSize && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
             Mostrando {((page - 1) * pageSize) + 1}-{Math.min(page * pageSize, transactions.length)} de {transactions.length}
@@ -1416,7 +1230,6 @@ function BankSection() {
         onOpenChange={setFormOpen}
         transaction={editingTx}
         onSubmit={handleSubmit}
-        isPending={createTx.isPending || updateTx.isPending}
       />
 
       {/* Delete Confirmation */}
@@ -1445,6 +1258,7 @@ function BankSection() {
 export function P2PTracker() {
   const [activeSection, setActiveSection] = useState<Section>('dashboard')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const { revision, refresh } = useLocalData()
 
   return (
     <div className="min-h-screen flex bg-background">
@@ -1489,9 +1303,9 @@ export function P2PTracker() {
 
         {/* Content Area */}
         <main className="flex-1 p-4 md:p-6 overflow-y-auto">
-          {activeSection === 'dashboard' && <DashboardSection />}
-          {activeSection === 'trades' && <TradesSection />}
-          {activeSection === 'bank' && <BankSection />}
+          {activeSection === 'dashboard' && <DashboardSection revision={revision} />}
+          {activeSection === 'trades' && <TradesSection revision={revision} refresh={refresh} />}
+          {activeSection === 'bank' && <BankSection revision={revision} refresh={refresh} />}
         </main>
       </div>
     </div>
