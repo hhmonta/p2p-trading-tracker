@@ -347,10 +347,10 @@ function TradeFormDialog({
   isPending: boolean
 }) {
   const [type, setType] = useState(trade?.type || 'compra')
-  const [asset, setAsset] = useState(trade?.asset || '')
+  const [asset, setAsset] = useState(trade?.asset || 'USDT')
   const [amount, setAmount] = useState(trade?.amount?.toString() || '')
   const [price, setPrice] = useState(trade?.price?.toString() || '')
-  const [currency, setCurrency] = useState(trade?.currency || 'CUP')
+  const [currency, setCurrency] = useState(trade?.currency || 'VES')
   const [platform, setPlatform] = useState(trade?.platform || 'P2P')
   const [counterparty, setCounterparty] = useState(trade?.counterparty || '')
   const [notes, setNotes] = useState(trade?.notes || '')
@@ -365,10 +365,10 @@ function TradeFormDialog({
 
   const resetForm = useCallback(() => {
     setType('compra')
-    setAsset('')
+    setAsset('USDT')
     setAmount('')
     setPrice('')
-    setCurrency('CUP')
+    setCurrency('VES')
     setPlatform('P2P')
     setCounterparty('')
     setNotes('')
@@ -423,7 +423,16 @@ function TradeFormDialog({
             </div>
             <div className="space-y-2">
               <Label htmlFor="trade-asset">Activo *</Label>
-              <Input id="trade-asset" placeholder="USDT, BTC..." value={asset} onChange={(e) => setAsset(e.target.value)} />
+              <Select value={asset} onValueChange={setAsset}>
+                <SelectTrigger id="trade-asset">
+                  <SelectValue placeholder="Seleccione" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="USDT">USDT</SelectItem>
+                  <SelectItem value="BTC">BTC</SelectItem>
+                  <SelectItem value="ETH">ETH</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -445,7 +454,15 @@ function TradeFormDialog({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="trade-currency">Moneda</Label>
-              <Input id="trade-currency" value={currency} onChange={(e) => setCurrency(e.target.value)} />
+              <Select value={currency} onValueChange={setCurrency}>
+                <SelectTrigger id="trade-currency">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="VES">VES</SelectItem>
+                  <SelectItem value="USD">USD</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="trade-platform">Plataforma</Label>
@@ -515,7 +532,7 @@ function BankFormDialog({
 }) {
   const [type, setType] = useState(transaction?.type || 'entrada')
   const [amount, setAmount] = useState(transaction?.amount?.toString() || '')
-  const [currency, setCurrency] = useState(transaction?.currency || 'CUP')
+  const [currency, setCurrency] = useState(transaction?.currency || 'VES')
   const [bank, setBank] = useState(transaction?.bank || '')
   const [concept, setConcept] = useState(transaction?.concept || '')
   const [reference, setReference] = useState(transaction?.reference || '')
@@ -525,7 +542,7 @@ function BankFormDialog({
   const resetForm = useCallback(() => {
     setType('entrada')
     setAmount('')
-    setCurrency('CUP')
+    setCurrency('VES')
     setBank('')
     setConcept('')
     setReference('')
@@ -583,7 +600,15 @@ function BankFormDialog({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="bank-currency">Moneda</Label>
-              <Input id="bank-currency" value={currency} onChange={(e) => setCurrency(e.target.value)} />
+              <Select value={currency} onValueChange={setCurrency}>
+                <SelectTrigger id="bank-currency">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="VES">VES</SelectItem>
+                  <SelectItem value="USD">USD</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="bank-bank">Banco</Label>

@@ -14,7 +14,7 @@ model Trade {
   amount       Float    // amount of asset
   price        Float    // price per unit in local currency
   total        Float    // total in local currency (amount * price)
-  currency     String   @default("CUP") // local currency
+  currency     String   @default("VES") // local currency
   platform     String   @default("P2P") // platform name
   counterparty String?  // who you traded with
   notes        String?  // additional notes
@@ -27,7 +27,7 @@ model BankTransaction {
   id        String   @id @default(cuid())
   type      String   // "entrada" or "salida"
   amount    Float    // amount
-  currency  String   @default("CUP")
+  currency  String   @default("VES")
   concept   String?  // concept/description
   reference String?  // reference number
   bank      String?  // bank name
